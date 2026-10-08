@@ -22,7 +22,7 @@ final class Security
     }
 
     /**
-     * يتحقق أن الملف صورة حقيقية بالاعتماد على الامتداد + finfo + getimagesize.
+     * Validates that the file is a real image using extension + finfo + getimagesize.
      *
      * @return array{ok:bool,error:string,mime:string,ext:string}
      */
@@ -30,7 +30,7 @@ final class Security
     {
         $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         if ($ext === '' || !in_array($ext, $config['allowed_extensions'], true)) {
-            return ['ok' => false, 'error' => 'امتداد الملف غير مسموح به.', 'mime' => '', 'ext' => $ext];
+            return ['ok' => false, 'error' => 'File extension is not allowed.', 'mime' => '', 'ext' => $ext];
         }
 
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
@@ -38,16 +38,16 @@ final class Security
 
         $mimeOk = in_array($mime, $config['allowed_mimes'], true) || str_starts_with($mime, 'image/');
         if (!$mimeOk) {
-            return ['ok' => false, 'error' => 'نوع الملف الفعلي ليس صورة (' . self::escape($mime) . ').', 'mime' => $mime, 'ext' => $ext];
+            return ['ok' => false, 'error' => 'The actual file type is not an image (' . self::escape($mime) . ').', 'mime' => $mime, 'ext' => $ext];
         }
 
-        // getimagesize يعمل مع الصيغ الشائعة، ونتجاهل فشله للصيغ الحديثة (heic/avif)
+        // getimagesize handles common formats; ignore its failure for modern ones (heic/avif).
         $info = @getimagesize($path);
         if ($info === false) {
             $check = Runner::run(['exiftool', '-s3', '-FileType', $path], 10, 4096);
             $type = trim($check['stdout']);
             if ($type === '') {
-                return ['ok' => false, 'error' => 'تعذّر التعرف على الملف كصورة صالحة.', 'mime' => $mime, 'ext' => $ext];
+                return ['ok' => false, 'error' => 'Unable to identify this file as a valid image.', 'mime' => $mime, 'ext' => $ext];
             }
         }
 
@@ -55,7 +55,7 @@ final class Security
     }
 
     /**
-     * حماية معدل بسيطة معتمدة على الجلسة.
+     * Simple session-based rate limiting.
      *
      * @return array{ok:bool,remaining:int,reset_in:int}
      */

@@ -41,9 +41,9 @@ final class BinwalkTool extends BaseTool
             }
         }
 
-        $note = count($entries) . ' توقيع مكتشف';
+        $note = count($entries) . ' signature(s) found';
         if (str_contains($res['stdout'], 'Entropy Exception') || str_contains($res['stderr'], 'Entropy Exception')) {
-            $note .= ' (تنبيه: وحدة الإنتروبيا في binwalk معطّلة، تم استخدام المحرك المدمج)';
+            $note .= ' (note: binwalk entropy module is broken here, using the built-in engine)';
         }
 
         return [

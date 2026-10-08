@@ -3,7 +3,7 @@
 namespace App;
 
 /**
- * تشغيل أوامر النظام بأمان (بدون shell) مع مهلة زمنية وحدّ للخرج.
+ * Runs system commands safely (no shell) with a timeout and output cap.
  */
 final class Runner
 {

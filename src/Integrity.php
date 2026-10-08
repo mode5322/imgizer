@@ -45,38 +45,38 @@ final class Integrity
     {
         $findings = [];
 
-        // 1) ملاحظات بنية الملف (بيانات ملحقة، أخطاء CRC...)
+        // 1) File structure notes (appended data, CRC errors...)
         foreach (($this->structure['notes'] ?? []) as $note) {
-            $findings[] = ['level' => $note['level'] ?? 'info', 'title' => 'بنية الملف', 'detail' => $note['text'] ?? ''];
+            $findings[] = ['level' => $note['level'] ?? 'info', 'title' => 'File structure', 'detail' => $note['text'] ?? ''];
         }
 
-        // 2) وجود بيانات EXIF
+        // 2) EXIF presence
         if (empty($this->highlights['has_exif'])) {
-            $findings[] = ['level' => 'warn', 'title' => 'بيانات EXIF', 'detail' => 'لا توجد بيانات EXIF/IPTC/XMP. قد تكون مُسحت عمداً (لإخفاء المصدر أو الموقع).'];
+            $findings[] = ['level' => 'warn', 'title' => 'EXIF metadata', 'detail' => 'No EXIF/IPTC/XMP metadata found; it may have been deliberately stripped (to hide source or location).'];
         } else {
-            $findings[] = ['level' => 'ok', 'title' => 'بيانات EXIF', 'detail' => 'الصورة تحتوي على بيانات وصفية قابلة للقراءة.'];
+            $findings[] = ['level' => 'ok', 'title' => 'EXIF metadata', 'detail' => 'Image contains readable metadata.'];
         }
 
-        // 3) بيانات الموقع الجغرافي
+        // 3) Geolocation
         if (!empty($this->highlights['gps']['available'])) {
-            $findings[] = ['level' => 'warn', 'title' => 'خصوصية الموقع', 'detail' => 'الصورة تحتوي إحداثيات GPS تكشف مكان التصوير.'];
+            $findings[] = ['level' => 'warn', 'title' => 'Location privacy', 'detail' => 'Image contains GPS coordinates that reveal where it was taken.'];
         }
 
-        // 4) برامج التعديل وسجل XMP
+        // 4) Editing software and XMP history
         if (!empty($this->highlights['editing'])) {
             foreach ($this->highlights['editing'] as $e) {
-                $findings[] = ['level' => 'warn', 'title' => 'مؤشر تعديل', 'detail' => $e['label'] . ': ' . $e['value']];
+                $findings[] = ['level' => 'warn', 'title' => 'Edit indicator', 'detail' => $e['label'] . ': ' . $e['value']];
             }
         }
 
-        // 5) مقارنة التواريخ
+        // 5) Date comparison
         $dates = [];
         $dateMap = [
-            'تاريخ الالتقاط (DateTimeOriginal)' => ['DateTimeOriginal'],
-            'تاريخ الإنشاء (CreateDate)' => ['CreateDate'],
-            'تاريخ تعديل الميتاداتا (ModifyDate)' => ['ModifyDate'],
-            'تاريخ تعديل الملف (نظام الملفات)' => ['FileModifyDate'],
-            'تاريخ GPS' => ['GPSDateTime'],
+            'Date taken (DateTimeOriginal)' => ['DateTimeOriginal'],
+            'Date created (CreateDate)' => ['CreateDate'],
+            'Metadata modified (ModifyDate)' => ['ModifyDate'],
+            'File modified (filesystem)' => ['FileModifyDate'],
+            'GPS date' => ['GPSDateTime'],
         ];
         foreach ($dateMap as $label => $tags) {
             $raw = $this->value($tags);
@@ -88,50 +88,50 @@ final class Integrity
         foreach ($dates as $d) {
             $byLabel[$d['label']] = $d;
         }
-        $original = $byLabel['تاريخ الالتقاط (DateTimeOriginal)']['ts'] ?? null;
-        $fileMod = $byLabel['تاريخ تعديل الملف (نظام الملفات)']['ts'] ?? null;
-        $exifMod = $byLabel['تاريخ تعديل الميتاداتا (ModifyDate)']['ts'] ?? null;
-        $create = $byLabel['تاريخ الإنشاء (CreateDate)']['ts'] ?? null;
+        $original = $byLabel['Date taken (DateTimeOriginal)']['ts'] ?? null;
+        $fileMod = $byLabel['File modified (filesystem)']['ts'] ?? null;
+        $exifMod = $byLabel['Metadata modified (ModifyDate)']['ts'] ?? null;
+        $create = $byLabel['Date created (CreateDate)']['ts'] ?? null;
 
         if ($original !== null && $fileMod !== null && $fileMod < $original) {
-            $findings[] = ['level' => 'danger', 'title' => 'تناقض زمني', 'detail' => 'تاريخ تعديل الملف يسبق تاريخ الالتقاط — مؤشر على تلاعب بالبيانات الوصفية.'];
+            $findings[] = ['level' => 'danger', 'title' => 'Time inconsistency', 'detail' => 'File mtime predates the capture date — possible metadata tampering.'];
         }
         if ($original !== null && $exifMod !== null && abs($exifMod - $original) > 60) {
-            $findings[] = ['level' => 'warn', 'title' => 'تناقض زمني', 'detail' => 'تاريخ تعديل الميتاداتا يختلف عن تاريخ الالتقاط (ربما حُرّرت ثم أُعيد حفظها).'];
+            $findings[] = ['level' => 'warn', 'title' => 'Time inconsistency', 'detail' => 'Metadata ModifyDate differs from DateTimeOriginal (possibly edited then re-saved).'];
         }
         if ($original === null && ($create !== null || $exifMod !== null)) {
-            $findings[] = ['level' => 'warn', 'title' => 'تاريخ ناقص', 'detail' => 'تاريخ الالتقاط الأصلي (DateTimeOriginal) مفقود.'];
+            $findings[] = ['level' => 'warn', 'title' => 'Missing date', 'detail' => 'The original capture date (DateTimeOriginal) is missing.'];
         }
         if ($original !== null && $fileMod !== null && abs($fileMod - $original) > 365 * 86400) {
-            $findings[] = ['level' => 'info', 'title' => 'فرق زمني كبير', 'detail' => 'الفرق بين تاريخ الالتقاط وتاريخ تعديل الملف يتجاوز سنة.'];
+            $findings[] = ['level' => 'info', 'title' => 'Large time gap', 'detail' => 'The gap between capture date and file modification exceeds one year.'];
         }
 
-        // 6) المصغّرة (Thumbnail)
+        // 6) Thumbnail
         $thumbOffset = $this->value(['ThumbnailOffset']);
         $thumbLength = $this->value(['ThumbnailLength']);
         $thumbImage = $this->value(['ThumbnailImage']);
         $thumbnail = ['present' => $thumbImage !== null && $thumbImage !== '', 'offset' => $thumbOffset, 'length' => $thumbLength];
         if ($thumbOffset !== null && ($thumbLength === null || (int) $thumbLength === 0) && !$thumbnail['present']) {
-            $findings[] = ['level' => 'warn', 'title' => 'مصغّرة منزوعة', 'detail' => 'يوجد مؤشر مصغّرة (ThumbnailOffset) لكن بياناتها محذوفة — أثر شائع لتجريد البيانات.'];
+            $findings[] = ['level' => 'warn', 'title' => 'Stripped thumbnail', 'detail' => 'ThumbnailOffset present but thumbnail data missing — a common artifact of metadata scrubbing.'];
         }
 
-        // 7) عدم تطابق الامتداد مع النوع الفعلي
+        // 7) Extension vs actual type mismatch
         $realExt = strtolower((string) $this->value(['FileTypeExtension']));
         $givenExt = strtolower((string) ($this->fileMeta['ext'] ?? ''));
         if ($realExt !== '' && $givenExt !== '' && $realExt !== $givenExt && !($realExt === 'jpeg' && $givenExt === 'jpg')) {
-            $findings[] = ['level' => 'warn', 'title' => 'عدم تطابق الامتداد', 'detail' => "الامتداد المرفوع «{$givenExt}» بينما النوع الفعلي «{$realExt}»."];
+            $findings[] = ['level' => 'warn', 'title' => 'Extension mismatch', 'detail' => "Uploaded extension «{$givenExt}» but the real type is «{$realExt}»."];
         }
 
-        // 8) تعليقات / UserComment
+        // 8) Comments / UserComment
         $userComment = $this->value(['UserComment', 'Comment']);
         if ($userComment !== null && $userComment !== '') {
-            $findings[] = ['level' => 'info', 'title' => 'تعليق', 'detail' => mb_substr($userComment, 0, 200)];
+            $findings[] = ['level' => 'info', 'title' => 'Comment', 'detail' => mb_substr($userComment, 0, 200)];
         }
 
-        // 9) تحذيرات exiftool
+        // 9) ExifTool warnings
         $stored = $this->structure['_exiftool_warnings'] ?? [];
         foreach ($stored as $w) {
-            $findings[] = ['level' => 'warn', 'title' => 'تحذير ExifTool', 'detail' => (string) $w];
+            $findings[] = ['level' => 'warn', 'title' => 'ExifTool warning', 'detail' => (string) $w];
         }
 
         $order = ['danger' => 0, 'warn' => 1, 'info' => 2, 'ok' => 3];
@@ -141,9 +141,9 @@ final class Integrity
         $hasWarn = (bool) array_filter($findings, static fn ($f) => $f['level'] === 'warn');
         $level = $hasDanger ? 'danger' : ($hasWarn ? 'warn' : 'ok');
         $titles = [
-            'danger' => 'ملف مشبوه / معدّل',
-            'warn' => 'يتطلب انتباهاً',
-            'ok' => 'لا مؤشرات على تلاعب',
+            'danger' => 'Suspicious / tampered file',
+            'warn' => 'Needs attention',
+            'ok' => 'No signs of tampering',
         ];
 
         return [

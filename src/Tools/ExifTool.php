@@ -36,7 +36,7 @@ final class ExifTool extends BaseTool
         if (!is_array($parsed) || !isset($parsed[0])) {
             return [
                 'status' => 'error',
-                'note' => trim($res['stderr']) ?: 'فشل تحليل مخرجات exiftool',
+                'note' => trim($res['stderr']) ?: 'Failed to parse exiftool output',
                 'data' => null,
                 'raw' => $res['stdout'] . "\n" . $res['stderr'],
             ];
@@ -74,7 +74,7 @@ final class ExifTool extends BaseTool
 
         return [
             'status' => 'ok',
-            'note' => count($items) . ' وسم',
+            'note' => count($items) . ' tags',
             'data' => [
                 'items' => $items,
                 'warnings' => $warnings,

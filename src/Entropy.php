@@ -47,7 +47,7 @@ final class Entropy
         $size = (int) (filesize($this->file) ?: 0);
         $handle = @fopen($this->file, 'rb');
         if (!$handle || $size === 0) {
-            return ['overall' => 0.0, 'points' => [], 'max' => 0.0, 'min' => 0.0, 'size' => $size, 'interpretation' => 'تعذّر قراءة الملف.'];
+            return ['overall' => 0.0, 'points' => [], 'max' => 0.0, 'min' => 0.0, 'size' => $size, 'interpretation' => 'Unable to read the file.'];
         }
 
         $window = 512;
@@ -87,10 +87,10 @@ final class Entropy
         }
 
         $interpretation = $overall > 7.9
-            ? 'إنتروبيا مرتفعة جداً: قد يشير إلى بيانات مضغوطة/مشفّرة أو محتوى مخفي.'
+            ? 'Very high entropy: may indicate compressed/encrypted data or hidden content.'
             : ($overall > 7.0
-                ? 'إنتروبيا مرتفعة: سلوك متوقع للصور المضغوطة (JPEG/PNG).'
-                : 'إنتروبيا منخفضة/متوسطة: بنية الصورة تحتوي على مساحات متكررة.');
+                ? 'High entropy: expected for compressed images (JPEG/PNG).'
+                : 'Low/medium entropy: the image contains repetitive structures.');
 
         return [
             'overall' => round($overall, 4),
@@ -103,7 +103,7 @@ final class Entropy
     }
 
     /**
-     * تحليل البتات الأقل أهمية (LSB) باستخدام ImageMagick لاستخراج البكسلات.
+     * Analyses least significant bits (LSB) via ImageMagick pixel extraction.
      *
      * @return array{available:bool,note:string,channels:array<string,array<string,mixed>>,suspicion:int}
      */
@@ -112,13 +112,13 @@ final class Entropy
         $unavailable = ['available' => false, 'note' => '', 'channels' => [], 'suspicion' => 0];
         [$w, $h] = $this->dims;
         if ($w < 2 || $h < 2) {
-            return array_merge($unavailable, ['note' => 'أبعاد الصورة غير معروفة لتحليل البتات.']);
+            return array_merge($unavailable, ['note' => 'Image dimensions unknown for bit analysis.']);
         }
 
         $bin = Runner::which('magick', (string) ($this->config['tool_paths']['magick'] ?? ''))
             ?? Runner::which('convert', (string) ($this->config['tool_paths']['magick'] ?? ''));
         if (!$bin) {
-            return array_merge($unavailable, ['note' => 'يتطلب ImageMagick لتحليل البتات (غير مثبت).']);
+            return array_merge($unavailable, ['note' => 'ImageMagick is required for bit analysis (not installed).']);
         }
 
         $scale = 400 / max($w, $h);
@@ -132,13 +132,13 @@ final class Entropy
         ], (int) $this->config['command_timeout'], 65536);
 
         if (!is_file($tmp)) {
-            return array_merge($unavailable, ['note' => 'تعذّر استخراج البكسلات: ' . trim($res['stderr'])]);
+            return array_merge($unavailable, ['note' => 'Failed to extract pixels: ' . trim($res['stderr'])]);
         }
         $raw = file_get_contents($tmp);
         @unlink($tmp);
         $expected = $tw * $th * 3;
         if ($raw === false || strlen($raw) < $expected) {
-            return array_merge($unavailable, ['note' => 'بيانات البكسلات غير مكتملة.']);
+            return array_merge($unavailable, ['note' => 'Pixel data is incomplete.']);
         }
         $raw = substr($raw, 0, $expected);
 
@@ -179,14 +179,14 @@ final class Entropy
 
         return [
             'available' => true,
-            'note' => 'تحليل إرشادي للبتات الأقل أهمية (لا يعد دليلاً قاطعاً).',
+            'note' => 'Heuristic analysis of least significant bits (not conclusive).',
             'channels' => $channels,
             'suspicion' => min(100, $suspicion),
         ];
     }
 
     /**
-     * يجمع البتات إلى بايتات ويبحث عن مقاطع نصية قابلة للطباعة.
+     * Packs bits into bytes and looks for printable text runs.
      *
      * @return array<int,array{offset:int,text:string}>
      */

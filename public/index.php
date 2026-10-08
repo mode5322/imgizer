@@ -6,7 +6,6 @@ session_start();
 
 require __DIR__ . '/../src/autoload.php';
 
-use App\Runner;
 use App\Security;
 
 $config = require __DIR__ . '/../config/config.php';
@@ -22,24 +21,6 @@ $a = random_int(2, 9);
 $b = random_int(2, 9);
 $_SESSION['captcha_answer'] = $a + $b;
 
-$toolMap = [
-    'exiftool' => 'ExifTool',
-    'exiv2' => 'Exiv2',
-    'identify' => 'ImageMagick',
-    'binwalk' => 'Binwalk',
-    'strings' => 'Strings',
-    'zsteg' => 'zsteg',
-    'steghide' => 'steghide',
-];
-$availability = [];
-foreach ($toolMap as $bin => $label) {
-    $availability[$label] = Runner::which($bin, (string) ($config['tool_paths'][$bin] ?? '')) !== null;
-}
-$imageMagickOk = $availability['ImageMagick'];
-if (!$imageMagickOk) {
-    $availability['ImageMagick'] = Runner::which('magick', (string) ($config['tool_paths']['magick'] ?? '')) !== null;
-}
-
 $appConfig = [
     'maxUploadBytes' => (int) $config['max_upload_bytes'],
     'maxUploadHuman' => Security::humanBytes((int) $config['max_upload_bytes']),
@@ -51,12 +32,12 @@ $appConfig = [
 ];
 ?>
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= Security::escape((string) $config['app_name']) ?></title>
-<link rel="stylesheet" href="assets/style.css?v=1">
+<link rel="stylesheet" href="assets/style.css?v=4">
 </head>
 <body>
 <header class="site-header">
@@ -64,15 +45,8 @@ $appConfig = [
         <span class="brand-mark">EXIF</span>
         <div>
             <h1><?= Security::escape((string) $config['app_name']) ?></h1>
-            <p>تحليل متقدم للصور: بيانات EXIF، البنية، الملفات المخفية، التخفي، وكشف التعديلات.</p>
+            <p>One consolidated report: location, metadata, integrity, hidden data and tamper signals.</p>
         </div>
-    </div>
-    <div class="tool-badges">
-        <?php foreach ($availability as $label => $ok): ?>
-            <span class="badge <?= $ok ? 'badge-ok' : 'badge-off' ?>" title="<?= $ok ? 'مثبتة' : 'غير مثبتة' ?>">
-                <?= Security::escape($label) ?>
-            </span>
-        <?php endforeach; ?>
     </div>
 </header>
 
@@ -82,28 +56,27 @@ $appConfig = [
             <div class="dropzone" id="dropzone" tabindex="0">
                 <input type="file" id="file-input" accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.webp,.tif,.tiff,.heic,.avif,.ico" hidden>
                 <div class="dropzone-inner" id="dropzone-inner">
-                    <div class="dz-icon">&#128247;</div>
-                    <p class="dz-title">اسحب وأفلت الصورة هنا</p>
-                    <p class="dz-sub">أو انقر للاختيار، أو الصق من الحافظة (Ctrl+V)</p>
-                    <p class="dz-limits">الحد الأقصى: <?= Security::escape(Security::humanBytes((int) $config['max_upload_bytes'])) ?></p>
+                    <p class="dz-title">Drag &amp; drop an image here</p>
+                    <p class="dz-sub">Click to browse, or paste from clipboard (Ctrl+V)</p>
+                    <p class="dz-limits">Max size: <?= Security::escape(Security::humanBytes((int) $config['max_upload_bytes'])) ?></p>
                 </div>
-                <img id="local-preview" alt="معاينة" hidden>
+                <img id="local-preview" alt="preview" hidden>
             </div>
 
             <div class="form-row">
                 <?php if ($config['access_password'] !== ''): ?>
                 <label class="field">
-                    <span>كلمة المرور</span>
+                    <span>Password</span>
                     <input type="password" id="password" required>
                 </label>
                 <?php endif; ?>
                 <?php if ($config['captcha_question']): ?>
                 <label class="field small">
-                    <span>تحقق بشري: <?= $a ?> + <?= $b ?> =</span>
+                    <span>Human check: <?= $a ?> + <?= $b ?> =</span>
                     <input type="number" id="captcha" inputmode="numeric" required>
                 </label>
                 <?php endif; ?>
-                <button type="submit" id="submit-btn" disabled>تحليل الصورة</button>
+                <button type="submit" id="submit-btn" disabled>Analyze image</button>
             </div>
             <div class="file-selected" id="file-selected" hidden>
                 <span id="selected-name"></span>
@@ -115,22 +88,21 @@ $appConfig = [
 
     <section class="loading" id="loading" hidden>
         <div class="spinner"></div>
-        <p id="loading-text">جارٍ تشغيل أدوات التحليل...</p>
-        <p class="muted" id="loading-timer">0.0 ث</p>
+        <p id="loading-text">Running analysis tools...</p>
+        <p class="muted" id="loading-timer">0.0 s</p>
     </section>
 
     <section id="results" hidden>
         <div class="summary panel" id="summary"></div>
-        <nav class="tabs" id="tabs"></nav>
-        <div class="tab-content" id="tab-content"></div>
+        <div class="report panel" id="report"></div>
     </section>
 </main>
 
 <footer class="site-footer">
-    <span>يعمل بقوة ExifTool · Exiv2 · ImageMagick · Binwalk · Strings · zsteg · steghide</span>
+    <span>Deep image forensics &amp; metadata analysis</span>
 </footer>
 
 <script type="application/json" id="app-config"><?= json_encode($appConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-<script src="assets/app.js?v=1"></script>
+<script src="assets/app.js?v=4"></script>
 </body>
 </html>

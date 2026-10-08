@@ -20,12 +20,12 @@ final class Structure
         $limit = 64 * 1024 * 1024;
         $handle = @fopen($this->file, 'rb');
         if (!$handle) {
-            return ['format' => 'unknown', 'error' => 'تعذّر فتح الملف'];
+            return ['format' => 'unknown', 'error' => 'Unable to open file'];
         }
         $data = $size > $limit ? fread($handle, $limit) : stream_get_contents($handle);
         fclose($handle);
         if ($data === false) {
-            return ['format' => 'unknown', 'error' => 'تعذّر قراءة الملف'];
+            return ['format' => 'unknown', 'error' => 'Unable to read file'];
         }
 
         if (str_starts_with($data, "\xFF\xD8")) {
@@ -83,7 +83,7 @@ final class Structure
             }
             if ($marker === 0xDA) {
                 $sosLen = $pos + 2 <= $len - 2 ? self::be16($data, $pos + 2) : 0;
-                $segments[] = ['offset' => $pos, 'marker' => 'SOS', 'name' => 'Start of Scan', 'size' => $sosLen, 'info' => 'بداية بيانات الصورة المضغوطة'];
+                $segments[] = ['offset' => $pos, 'marker' => 'SOS', 'name' => 'Start of Scan', 'size' => $sosLen, 'info' => 'Start of compressed image data'];
                 $eoi = $this->findEoi($data, $pos + 2 + $sosLen);
                 break;
             }
@@ -104,13 +104,13 @@ final class Structure
                 $info = 'JFIF v' . ord($payload[5]) . '.' . str_pad((string) ord($payload[6]), 2, '0', STR_PAD_LEFT);
             } elseif ($marker === 0xE1 && str_starts_with($payload, "Exif\0\0")) {
                 $sawExif = true;
-                $info = 'بيانات EXIF';
+                $info = 'EXIF data';
             } elseif ($marker === 0xE1 && str_starts_with($payload, 'http://ns.adobe.com/xap/1.0/')) {
-                $info = 'بيانات XMP';
+                $info = 'XMP data';
             } elseif ($marker === 0xE2 && str_starts_with($payload, "ICC_PROFILE\0")) {
-                $info = 'ملف تعريف ICC';
+                $info = 'ICC profile';
             } elseif ($marker === 0xED && str_starts_with($payload, 'Photoshop 3.0')) {
-                $info = 'مورد Photoshop (IPTC/IRB)';
+                $info = 'Photoshop resource (IPTC/IRB)';
             } elseif ($marker === 0xEE && str_starts_with($payload, 'Adobe')) {
                 $info = 'Adobe APP14';
             } elseif ($marker === 0xFE) {
@@ -119,7 +119,7 @@ final class Structure
                 if ($clean !== '') {
                     $comments[] = substr($clean, 0, 500);
                 }
-                $info = 'تعليق (COM)';
+                $info = 'Comment (COM)';
             }
 
             $segments[] = ['offset' => $pos, 'marker' => strtoupper(dechex($marker)), 'name' => $name, 'size' => $segLen, 'info' => $info];
@@ -130,15 +130,15 @@ final class Structure
         }
 
         if ($eoi === null) {
-            $notes[] = ['level' => 'warn', 'text' => 'لم يتم العثور على علامة نهاية JPEG (FFD9).'];
+            $notes[] = ['level' => 'warn', 'text' => 'EOF marker (FFD9) was not found.'];
             $eoi = $len;
         }
         $trailing = max(0, $size - $eoi);
         if ($trailing > 0) {
-            $notes[] = ['level' => 'danger', 'text' => "يوجد {$trailing} بايت مُلحق بعد نهاية الصورة (بيانات مخفية محتملة)."];
+            $notes[] = ['level' => 'danger', 'text' => "{$trailing} bytes appended after the end of image (possible hidden data)."];
         }
         if (!$sawExif && !$sawJfif) {
-            $notes[] = ['level' => 'info', 'text' => 'الصورة لا تحتوي على وسم JFIF/EXIF قياسي.'];
+            $notes[] = ['level' => 'info', 'text' => 'Image has no standard JFIF/EXIF marker.'];
         }
 
         return [
@@ -200,7 +200,7 @@ final class Structure
             $chunkLen = self::be32($data, $pos);
             $type = substr($data, $pos + 4, 4);
             if ($chunkLen < 0 || $pos + 12 + $chunkLen > $len) {
-                $notes[] = ['level' => 'warn', 'text' => 'بنية PNG تالفة (طول مقطع غير صالح).'];
+                $notes[] = ['level' => 'warn', 'text' => 'Malformed PNG structure (invalid chunk length).'];
                 break;
             }
             $chunkData = substr($data, $pos + 8, $chunkLen);
@@ -213,25 +213,25 @@ final class Structure
             $info = '';
             if ($type === 'tEXt' || $type === 'zTXt' || $type === 'iTXt') {
                 $keyword = strstr($chunkData, "\0", true);
-                $info = 'بيانات نصية: ' . ($keyword !== false ? $keyword : '');
+                $info = 'Text data: ' . ($keyword !== false ? $keyword : '');
                 if ($keyword !== false) {
                     $comments[] = trim(($keyword !== false ? $keyword . ': ' : '') . mb_substr(preg_replace('/[^\x20-\x7E\x{0600}-\x{06FF}]+/u', ' ', substr($chunkData, strpos($chunkData, "\0") + 1)) ?: '', 0, 300));
                 }
             } elseif ($type === 'eXIf') {
-                $info = 'بيانات EXIF';
+                $info = 'EXIF data';
             } elseif ($type === 'pHYs') {
-                $info = 'الأبعاد الفيزيائية (DPI)';
+                $info = 'Physical dimensions (DPI)';
             } elseif ($type === 'tIME') {
-                $info = 'وقت آخر تعديل داخل الملف';
+                $info = 'Embedded modification time';
             } elseif ($type === 'acTL') {
-                $info = 'صورة PNG متحركة (APNG)';
+                $info = 'Animated PNG (APNG)';
             } elseif ($type === 'IDAT') {
                 $idatCount++;
             }
 
             $chunks[] = ['type' => $type, 'size' => $chunkLen, 'offset' => $pos, 'info' => $info, 'crc_ok' => !in_array($type, $crcErrors, true)];
             if ($type === 'IDAT') {
-                $chunks[array_key_last($chunks)]['info'] = 'بيانات الصورة #' . $idatCount;
+                $chunks[array_key_last($chunks)]['info'] = 'Image data #' . $idatCount;
             }
 
             $pos += 12 + $chunkLen;
@@ -245,11 +245,11 @@ final class Structure
         }
 
         if ($crcErrors) {
-            $notes[] = ['level' => 'danger', 'text' => 'أخطاء CRC في المقاطع: ' . implode(', ', array_unique($crcErrors)) . ' (تلاعب أو تلف).'];
+            $notes[] = ['level' => 'danger', 'text' => 'CRC errors in chunks: ' . implode(', ', array_unique($crcErrors)) . ' (tampering or corruption).'];
         }
         $trailing = max(0, $size - $end);
         if ($trailing > 0) {
-            $notes[] = ['level' => 'danger', 'text' => "يوجد {$trailing} بايت مُلحق بعد نهاية PNG (IEND)."];
+            $notes[] = ['level' => 'danger', 'text' => "{$trailing} bytes appended after PNG end (IEND)."];
         }
 
         return [

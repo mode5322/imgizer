@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# سكربت تثبيت "محلّل بيانات الصور" على سيرفر Debian/Ubuntu/Kali.
-# الاستخدام:
-#   sudo ./install.sh              # تثبيت الاعتماديات فقط
-#   sudo ./install.sh --nginx      # + إعداد موقع Nginx
+# Installer for "Image Metadata Analyzer" on Debian/Ubuntu/Kali servers.
+# Usage:
+#   sudo ./install.sh              # install dependencies only
+#   sudo ./install.sh --nginx      # also set up an Nginx site
 #   sudo ./install.sh --nginx --domain example.com
 #
 set -euo pipefail
@@ -16,12 +16,12 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --nginx) INSTALL_NGINX=1; shift ;;
         --domain) DOMAIN="$2"; shift 2 ;;
-        *) echo "خيار غير معروف: $1"; exit 1 ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 
 if [[ "$(id -u)" -ne 0 ]]; then
-    echo "✖ يجب تشغيل السكربت بصلاحية root: sudo ./install.sh"
+    echo "✖ Run this script with root privileges: sudo ./install.sh"
     exit 1
 fi
 
@@ -33,10 +33,10 @@ require_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 export DEBIAN_FRONTEND=noninteractive
 
-log "تحديث فهارس الحزم"
+log "Updating package lists"
 apt-get update -y
 
-log "تثبيت أدوات التحليل"
+log "Installing analysis tools"
 apt-get install -y \
     libimage-exiftool-perl \
     exiv2 \
@@ -50,20 +50,20 @@ apt-get install -y \
     php-cli \
     php-fpm \
     php-mbstring \
-    curl || warn "تعذّر تثبيت بعض الحزم (قد تكون متوفرة بالفعل)."
+    curl || warn "Some packages failed to install (they may already exist)."
 
-log "تثبيت zsteg (تحليل تخفي PNG/BMP)"
+log "Installing zsteg (PNG/BMP stego analysis)"
 if ! require_cmd zsteg; then
     if gem install zsteg >/dev/null 2>&1; then
-        ok "تم تثبيت zsteg"
+        ok "zsteg installed"
     else
-        warn "تعذّر تثبيت zsteg، سيتعامل التطبيق مع غيابه."
+        warn "zsteg install failed; the app will handle its absence."
     fi
 else
-    ok "zsteg مثبّت مسبقاً"
+    ok "zsteg already present"
 fi
 
-log "ضبط حدود رفع الملفات في PHP"
+log "Tuning PHP upload limits"
 for ini in /etc/php/*/fpm/php.ini /etc/php/*/cli/php.ini; do
     [[ -f "$ini" ]] || continue
     sed -i -E 's/^;?\s*upload_max_filesize\s*=.*/upload_max_filesize = 25M/' "$ini"
@@ -71,18 +71,18 @@ for ini in /etc/php/*/fpm/php.ini /etc/php/*/cli/php.ini; do
     sed -i -E 's/^;?\s*max_execution_time\s*=.*/max_execution_time = 120/' "$ini"
     sed -i -E 's/^;?\s*max_input_time\s*=.*/max_input_time = 120/' "$ini"
 done
-ok "تم ضبط php.ini"
+ok "php.ini tuned"
 
-log "تهيئة مجلدات التخزين والصلاحيات"
+log "Preparing storage folders and permissions"
 WEB_USER="www-data"
 [[ -d /var/www ]] || WEB_USER="www-data"
 mkdir -p "$APP_DIR/storage/uploads" "$APP_DIR/storage/tmp"
 chown -R "$WEB_USER":"$WEB_USER" "$APP_DIR/storage" 2>/dev/null || true
 chmod -R 775 "$APP_DIR/storage"
-ok "الجلسات: $WEB_USER"
+ok "Web user: $WEB_USER"
 
 if [[ "$INSTALL_NGINX" -eq 1 ]]; then
-    log "إعداد Nginx"
+    log "Setting up Nginx"
     apt-get install -y nginx
 
     PHP_SOCK="$(ls /run/php/php*-fpm.sock 2>/dev/null | head -n1 || true)"
@@ -116,7 +116,7 @@ server {
         fastcgi_read_timeout 150s;
     }
 
-    # منع الوصول لملفات النظام داخل المشروع
+    # Deny access to internal project dirs
     location ~* /(config|src|storage|deploy)/ {
         deny all;
         return 404;
@@ -131,23 +131,23 @@ NGINX
     ln -sf /etc/nginx/sites-available/exif-analyzer /etc/nginx/sites-enabled/exif-analyzer
     rm -f /etc/nginx/sites-enabled/default
     nginx -t && systemctl reload nginx
-    ok "تم إعداد Nginx (server_name: ${DOMAIN})"
+    ok "Nginx configured (server_name: ${DOMAIN})"
 fi
 
-log "إعادة تشغيل خدمات PHP/Nginx"
+log "Restarting PHP/Nginx services"
 systemctl restart php*-fpm 2>/dev/null || true
 [[ "$INSTALL_NGINX" -eq 1 ]] && systemctl restart nginx || true
 
 cat <<EOF
 
-\033[1;32mتم التثبيت بنجاح!\033[0m
-المسار: ${APP_DIR}
+\033[1;32mInstallation complete!\033[0m
+Project path: ${APP_DIR}
 
-للتشغيل السريع للتجربة:
+To run it quickly for testing:
     cd ${APP_DIR}
     php -S 0.0.0.0:8080 -t public
 
-ثم افتح: http://<عنوان-السيرفر>:8080
+Then open: http://<server-address>:8080
 
-للإنتاج استخدم Nginx مع: sudo ./install.sh --nginx --domain your-domain.com
+For production, use Nginx with: sudo ./install.sh --nginx --domain your-domain.com
 EOF

@@ -13,7 +13,7 @@ final class StegoTool extends BaseTool
 
     public function name(): string
     {
-        return 'أدوات التخفي (Steganography)';
+        return 'Steganography tools';
     }
 
     public function icon(): string
@@ -32,7 +32,7 @@ final class StegoTool extends BaseTool
 
         return [
             'status' => 'ok',
-            'note' => $flags > 0 ? "{$flags} مؤشر محتمل للتخفي" : 'لم تُكتشف مؤشرات تخفي واضحة',
+            'note' => $flags > 0 ? "{$flags} possible stego indicator(s)" : 'No clear stego indicators found',
             'data' => $result,
             'raw' => trim(($result['zsteg']['raw'] ?? '') . "\n\n" . ($result['steghide']['raw'] ?? '')),
         ];
@@ -42,10 +42,10 @@ final class StegoTool extends BaseTool
     {
         $bin = $this->bin('zsteg');
         if (!$bin) {
-            return ['available' => false, 'note' => 'zsteg غير مثبت (مطلوب للصور PNG/BMP)', 'findings' => [], 'raw' => ''];
+            return ['available' => false, 'note' => 'zsteg not installed (needed for PNG/BMP)', 'findings' => [], 'raw' => ''];
         }
         if (!in_array($this->mime, ['image/png', 'image/bmp', 'image/x-ms-bmp', 'image/x-icon'], true)) {
-            return ['available' => true, 'note' => 'يدعم zsteg صور PNG/BMP فقط', 'findings' => [], 'raw' => ''];
+            return ['available' => true, 'note' => 'zsteg only supports PNG/BMP', 'findings' => [], 'raw' => ''];
         }
 
         $res = Runner::run([$bin, '-a', $this->file], $this->timeout(), $this->maxRaw());
@@ -70,13 +70,13 @@ final class StegoTool extends BaseTool
             }
             $note = '';
             if (preg_match('/^b\d+,/', $label)) {
-                $note = 'محتوى محتمل مخفي في وحدات البت';
+                $note = 'Possible hidden content in bit planes';
                 $interesting++;
             } elseif (str_contains($label, 'extradata')) {
-                $note = 'يوجد بيانات إضافية ملحقة بالصورة';
+                $note = 'Extra data appended to the image';
                 $interesting++;
             } elseif (str_contains($label, 'text') || str_contains($label, 'file') || str_contains($label, 'comment')) {
-                $note = 'بيانات نصية/ملف داخل بنية الصورة';
+                $note = 'Text/file data inside the image structure';
                 $interesting++;
             }
             $findings[] = ['label' => $label, 'value' => mb_substr($value, 0, 400), 'note' => $note];
@@ -85,7 +85,7 @@ final class StegoTool extends BaseTool
             }
         }
 
-        $note = $res['timed_out'] ? 'انتهت المهلة قبل إكمال الفحص' : ($interesting . ' مؤشر');
+        $note = $res['timed_out'] ? 'Timed out before finishing the scan' : ($interesting . ' indicator(s)');
 
         return [
             'available' => true,
@@ -100,11 +100,11 @@ final class StegoTool extends BaseTool
     {
         $bin = $this->bin('steghide');
         if (!$bin) {
-            return ['available' => false, 'note' => 'steghide غير مثبت', 'embedded' => false, 'raw' => ''];
+            return ['available' => false, 'note' => 'steghide not installed', 'embedded' => false, 'raw' => ''];
         }
         $supported = ['image/jpeg', 'image/png', 'image/bmp', 'image/x-ms-bmp'];
         if (!in_array($this->mime, $supported, true)) {
-            return ['available' => true, 'note' => 'يدعم steghide صور JPEG/BMP', 'embedded' => false, 'raw' => ''];
+            return ['available' => true, 'note' => 'steghide only supports JPEG/BMP', 'embedded' => false, 'raw' => ''];
         }
 
         $res = Runner::run([$bin, 'info', $this->file, '-p', ''], $this->timeout(), 65536, 32768, "y\n");
@@ -116,8 +116,8 @@ final class StegoTool extends BaseTool
             'available' => true,
             'embedded' => $embedded && !$negative,
             'note' => $embedded && !$negative
-                ? 'تم اكتشاف بيانات مضمّنة بواسطة steghide'
-                : 'لا توجد بيانات مضمّنة عبر steghide',
+                ? 'Embedded data detected by steghide'
+                : 'No embedded data found by steghide',
             'raw' => $out,
         ];
     }

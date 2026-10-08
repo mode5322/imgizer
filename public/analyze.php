@@ -18,53 +18,53 @@ $uploader = new Uploader($storageDir, $tmpDir);
 $uploader->cleanup((int) $config['retention_hours']);
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-    Security::json(['ok' => false, 'error' => 'طريقة الطلب غير مسموحة.'], 405);
+    Security::json(['ok' => false, 'error' => 'Method not allowed.'], 405);
 }
 
 if (!Security::checkCsrf($_POST['csrf'] ?? null)) {
-    Security::json(['ok' => false, 'error' => 'انتهت صلاحية الجلسة، أعد تحميل الصفحة.'], 419);
+    Security::json(['ok' => false, 'error' => 'Session expired, please reload the page.'], 419);
 }
 
 if ($config['access_password'] !== '') {
     $given = (string) ($_POST['password'] ?? ($_SERVER['HTTP_X_ACCESS_PASSWORD'] ?? ''));
     if ($given === '' || !hash_equals((string) $config['access_password'], $given)) {
-        Security::json(['ok' => false, 'error' => 'كلمة المرور غير صحيحة.'], 403);
+        Security::json(['ok' => false, 'error' => 'Invalid password.'], 403);
     }
 }
 
 if ($config['captcha_question']) {
     $answer = (int) ($_POST['captcha'] ?? -1);
     if (empty($_SESSION['captcha_answer']) || $answer !== (int) $_SESSION['captcha_answer']) {
-        Security::json(['ok' => false, 'error' => 'إجابة التحقق البشري غير صحيحة.'], 422);
+        Security::json(['ok' => false, 'error' => 'Incorrect human-check answer.'], 422);
     }
     unset($_SESSION['captcha_answer']);
 }
 
 $limit = Security::rateLimit($config);
 if (!$limit['ok']) {
-    Security::json(['ok' => false, 'error' => 'تم تجاوز الحد المسموح من التحليلات. حاول لاحقاً.'], 429);
+    Security::json(['ok' => false, 'error' => 'Analysis rate limit reached. Try again later.'], 429);
 }
 
 if (!isset($_FILES['image']) || !is_array($_FILES['image'])) {
-    Security::json(['ok' => false, 'error' => 'لم يتم استلام أي صورة.'], 400);
+    Security::json(['ok' => false, 'error' => 'No image was received.'], 400);
 }
 
 $file = $_FILES['image'];
 if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
     $messages = [
-        UPLOAD_ERR_INI_SIZE => 'حجم الملف يتجاوز الحد المسموح في إعدادات PHP.',
-        UPLOAD_ERR_FORM_SIZE => 'حجم الملف يتجاوز الحد المسموح.',
-        UPLOAD_ERR_PARTIAL => 'لم يكتمل رفع الملف.',
-        UPLOAD_ERR_NO_FILE => 'لم يتم اختيار ملف.',
-        UPLOAD_ERR_NO_TMP_DIR => 'مجلد الملفات المؤقتة غير متاح.',
-        UPLOAD_ERR_CANT_WRITE => 'تعذّر كتابة الملف على القرص.',
-        UPLOAD_ERR_EXTENSION => 'أوقف امتداد PHP عملية الرفع.',
+        UPLOAD_ERR_INI_SIZE => 'File size exceeds the limit set in PHP settings.',
+        UPLOAD_ERR_FORM_SIZE => 'File size exceeds the allowed limit.',
+        UPLOAD_ERR_PARTIAL => 'The file was only partially uploaded.',
+        UPLOAD_ERR_NO_FILE => 'No file was selected.',
+        UPLOAD_ERR_NO_TMP_DIR => 'Server temp directory is missing.',
+        UPLOAD_ERR_CANT_WRITE => 'Failed to write the file to disk.',
+        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the upload.',
     ];
-    Security::json(['ok' => false, 'error' => $messages[$file['error']] ?? 'فشل رفع الملف.'], 400);
+    Security::json(['ok' => false, 'error' => $messages[$file['error']] ?? 'Upload failed.'], 400);
 }
 
 if (($file['size'] ?? 0) > (int) $config['max_upload_bytes']) {
-    Security::json(['ok' => false, 'error' => 'حجم الصورة يتجاوز الحد المسموح (' . Security::humanBytes((int) $config['max_upload_bytes']) . ').'], 413);
+    Security::json(['ok' => false, 'error' => 'Image exceeds the size limit (' . Security::humanBytes((int) $config['max_upload_bytes']) . ').'], 413);
 }
 
 $originalName = (string) ($file['name'] ?? 'image');
@@ -75,7 +75,7 @@ if (!$check['ok']) {
 
 $stored = $uploader->store((string) $file['tmp_name'], $check['ext']);
 if ($stored === null) {
-    Security::json(['ok' => false, 'error' => 'تعذّر حفظ الصورة على الخادم.'], 500);
+    Security::json(['ok' => false, 'error' => 'Failed to store the image on the server.'], 500);
 }
 
 $info = @getimagesize($stored['path']);
@@ -97,5 +97,5 @@ try {
     $result['meta']['rate_remaining'] = $limit['remaining'];
     Security::json($result);
 } catch (\Throwable $e) {
-    Security::json(['ok' => false, 'error' => 'حدث خطأ أثناء التحليل: ' . $e->getMessage()], 500);
+    Security::json(['ok' => false, 'error' => 'Analysis failed: ' . $e->getMessage()], 500);
 }

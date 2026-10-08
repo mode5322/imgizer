@@ -74,7 +74,7 @@ abstract class BaseTool
     {
         return [
             'status' => 'missing',
-            'note' => "الأداة «{$tool}» غير مثبتة على الخادم. شغّل install.sh لتثبيت الحزمة الكاملة.",
+            'note' => "The tool «{$tool}» is not installed on the server. Run install.sh to install the full package.",
             'data' => null,
             'raw' => '',
         ];

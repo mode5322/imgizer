@@ -1,24 +1,24 @@
 <?php
 
 /**
- * إعدادات التطبيق الرئيسية.
- * لكي لا تفقد إعداداتك عند تحديث المستودع، ضع تعديلاتك في config/config.local.php
- * وسيتم دمجها فوق هذه القيم تلقائياً.
+ * Main application settings.
+ * To keep your settings across repo updates, put changes in config/config.local.php;
+ * it is merged over these defaults automatically.
  */
 
 $config = [
-    'app_name' => 'محلّل بيانات الصور',
+    'app_name' => 'Image Metadata Analyzer',
 
-    // الحد الأقصى لحجم الصورة المرفوعة (بايت)
+    // Maximum size of an uploaded image (bytes)
     'max_upload_bytes' => 25 * 1024 * 1024,
 
-    // امتدادات مسموحة (متوافقة مع أنواع الصور الشائعة)
+    // Allowed extensions (common image types)
     'allowed_extensions' => [
         'jpg', 'jpeg', 'jpe', 'png', 'gif', 'bmp', 'webp',
         'tif', 'tiff', 'heic', 'heif', 'avif', 'ico', 'jp2', 'jxl',
     ],
 
-    // أنواع MIME مسموحة (يتم التحقق منها عبر finfo)
+    // Allowed MIME types (validated via finfo)
     'allowed_mimes' => [
         'image/jpeg', 'image/png', 'image/gif', 'image/bmp',
         'image/webp', 'image/tiff', 'image/heic', 'image/heif',
@@ -27,28 +27,28 @@ $config = [
         'image/x-canon-cr3', 'image/x-sony-arw', 'image/x-adobe-dng',
     ],
 
-    // مهلة كل أداة بالثواني
+    // Timeout per tool in seconds
     'command_timeout' => 40,
 
-    // الحد الأقصى لحجم الخرج الخام المحفوظ لكل أداة (بايت)
+    // Max raw output kept per tool (bytes)
     'max_raw_bytes' => 768 * 1024,
 
-    // مدة الاحتفاظ بالملفات المرفوعة (بالساعات) قبل الحذف التلقائي
+    // Retention time for uploaded files (hours) before auto-delete
     'retention_hours' => 6,
 
-    // كلمة مرور اختيارية لحماية الصفحة (اتركها فارغة لتعطيل الحماية)
+    // Optional password protecting the page (empty = disabled)
     'access_password' => '',
 
-    // حد المعدل: عدد التحليلات المسموحة لكل جلسة خلال النافذة الزمنية
+    // Rate limit: allowed analyses per session in the time window
     'rate_limit' => [
         'max' => 40,
         'window_seconds' => 3600,
     ],
 
-    // مسار عتبة عدّاد حماية الروبوتات (اتركها فارغة لتعطيلها)
+    // Captcha counter path (leave empty to disable)
     'captcha_question' => true,
 
-    // مسارات أدوات مخصّصة (اترك قدر الإمكان فارغاً للاكتشاف التلقائي)
+    // Custom tool paths (leave empty for auto-detection)
     'tool_paths' => [
         'exiftool' => '',
         'exiv2' => '',

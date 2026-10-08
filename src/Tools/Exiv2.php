@@ -59,7 +59,7 @@ final class Exiv2 extends BaseTool
 
         return [
             'status' => 'ok',
-            'note' => count($items) . ' حقل',
+            'note' => count($items) . ' fields',
             'data' => ['items' => $items],
             'raw' => $res['stdout'],
         ];

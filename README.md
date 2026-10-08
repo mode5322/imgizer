@@ -1,67 +1,67 @@
-# محلّل بيانات الصور (Image Metadata Analyzer)
+# imgizer
 
-صفحة ويب بلغة **PHP** تستقبل صورة وتعرض تحليلاً متقدماً لها باستخدام مجموعة أدوات احترافية:
-بيانات EXIF الكاملة، بنية الملف، الملفات المضمّنة/المخفية، تحليل التخفي (Steganography)،
-الإنتروبيا، وكشف مؤشرات التعديل والتلاعب.
-
----
-
-## المزايا
-
-- **EXIF كامل** عبر ExifTool مع تجميع الوسوم وإمكانية التصفية والبحث.
-- **Exiv2** لقراءة IPTC/XMP/EXIF من زاوية أخرى.
-- **ImageMagick** لخصائص الصورة (مساحة الألوان، العمق، الضغط، عدد الإطارات...).
-- **Binwalk** لكشف التوقيعات والملفات المضمّنة أو الملحقة.
-- **Strings** لاستخراج الروابط والبُرد والنصوص المثيرة للاهتمام.
-- **التخفي**: zsteg (PNG/BMP) + steghide (JPEG/BMP) + تحليل البتات الأقل أهمية (LSB).
-- **إنتروبيا الملف** مع رسم بياني تفاعلي للكشف عن محتوى مشفّر/مخفي.
-- **سلامة الملف وكشف التعديل**: بيانات ملحقة بعد نهاية الصورة، أخطاء CRC،
-  تناقض التواريخ، نزع المصغّرات، برامج التعديل وسجل XMP، نزع بيانات EXIF.
-- **الخصوصية**: استخراج إحداثيات GPS مع روابط الخرائط، ورصد الحقول الحساسة.
-- واجهة عربية RTL، سحب وإفلات، معاينة محلية، تنزيل النتائج، وحماية بالجلسة/كلمة مرور.
+A **PHP** web page that accepts an image and returns an advanced analysis using a professional toolset:
+full EXIF metadata, file structure, embedded/hidden files, steganography analysis,
+entropy, and tampering/editing indicators.
 
 ---
 
-## التقنيات والمتطلبات
+## Features
 
-| المكوّن | الغرض | إلزامي |
+- **Full EXIF** via ExifTool, with tag grouping, filtering and search.
+- **Exiv2** to read IPTC/XMP/EXIF from a different angle.
+- **ImageMagick** for image properties (color space, depth, compression, frame count...).
+- **Binwalk** to detect signatures and embedded or appended files.
+- **Strings** to extract links, emails and interesting text.
+- **Steganography**: zsteg (PNG/BMP) + steghide (JPEG/BMP) + Least Significant Bit (LSB) analysis.
+- **File entropy** with an interactive chart to spot encrypted/hidden content.
+- **Integrity & tamper detection**: data appended after the end of the image, CRC errors,
+  timestamp inconsistencies, stripped thumbnails, editing software and XMP history, stripped EXIF.
+- **Privacy**: GPS coordinate extraction with map links, plus sensitive field monitoring.
+- Dark English UI, drag & drop, local preview, results download, and session/password protection.
+
+---
+
+## Requirements
+
+| Component | Purpose | Required |
 |---|---|---|
-| PHP ≥ 8.0 (مع `fileinfo` و`exif`) | تشغيل التطبيق | نعم |
-| ExifTool | قراءة البيانات الوصفية | نعم (الأساس) |
-| ImageMagick (`identify`/`magick`) | خصائص الصورة وتحليل LSB | نعم |
-| Exiv2 | قراءة IPTC/XMP | مستحسن |
-| Binwalk | التوقيعات والملفات المضمّنة | مستحسن |
-| Binutils (`strings`) | استخراج النصوص | مستحسن |
-| zsteg (Ruby) | تخفي PNG/BMP | اختياري |
-| steghide | تخفي JPEG/BMP | اختياري |
+| PHP ≥ 8.0 (with `fileinfo` and `exif`) | Runs the app | Yes |
+| ExifTool | Read metadata | Yes (core) |
+| ImageMagick (`identify`/`magick`) | Image properties and LSB analysis | Yes |
+| Exiv2 | Read IPTC/XMP | Recommended |
+| Binwalk | Signatures and embedded files | Recommended |
+| Binutils (`strings`) | Extract text | Recommended |
+| zsteg (Ruby) | PNG/BMP stego | Optional |
+| steghide | JPEG/BMP stego | Optional |
 
-> التطبيق يعمل حتى مع غياب الأدوات الاختيارية، ويعرض حالتها في أعلى الصفحة.
+> The app still works when optional tools are missing, and shows their status at the top of the page.
 
 ---
 
-## التثبيت السريع
+## Quick Install
 
 ```bash
-# 1) استنسخ المشروع من GitHub على الـ VPS
+# 1) Clone the project from GitHub on the VPS
 git clone https://github.com/<username>/<repo>.git
 cd <repo>
 
-# 2) ثبّت الاعتماديات وأعدّ Nginx (Debian/Ubuntu/Kali)
+# 2) Install dependencies and set up Nginx (Debian/Ubuntu/Kali)
 sudo ./install.sh --nginx --domain your-domain.com
 
-# أو بدون Nginx (للتجربة فقط)
+# Or without Nginx (testing only)
 sudo ./install.sh
 php -S 0.0.0.0:8080 -t public
 ```
 
-ثم افتح المتصفح على نطاقك.
+Then open your domain in a browser.
 
 ---
 
-## النشر عبر GitHub (كما اخترت)
+## Deploying via GitHub
 
 ```bash
-# على جهازك المحلي: ارفع المشروع
+# On your local machine: push the project
 git init
 git add .
 git commit -m "Initial commit: image metadata analyzer"
@@ -71,89 +71,88 @@ git push -u origin main
 ```
 
 ```bash
-# على الـ VPS: استرجع المشروع
+# On the VPS: fetch the project
 git clone https://github.com/<username>/<repo>.git
 cd <repo>
 sudo ./install.sh --nginx --domain your-domain.com
 
-# لتحديث لاحق
+# For later updates
 git pull && sudo systemctl reload php*-fpm nginx
 ```
 
 ---
 
-## الإعدادات
+## Configuration
 
-كل الإعدادات في `config/config.php`. لتجاوزها دون تعديل المستودع أنشئ
-`config/config.local.php` (مستثنى من Git) يعيد مصفوفة بالتعديلات:
+All settings live in `config/config.php`. To override them without touching the repo,
+create `config/config.local.php` (git-ignored) that returns an array of overrides:
 
 ```php
 <?php
 return [
-    // 'access_password' => 'كلمة-مرور-قوية',
+    // 'access_password' => 'a-strong-password',
     'max_upload_bytes' => 25 * 1024 * 1024,
     'captcha_question' => true,
     'retention_hours' => 6,
 ];
 ```
 
-| الإعداد | الوصف |
+| Setting | Description |
 |---|---|
-| `max_upload_bytes` | الحد الأقصى لحجم الصورة |
-| `access_password` | كلمة مرور اختيارية لحماية الصفحة (فارغة = بدون حماية) |
-| `captcha_question` | سؤال حسابي بسيط لمنع الروبوتات |
-| `command_timeout` | مهلة كل أداة بالثواني |
-| `rate_limit` | عدد التحليلات لكل جلسة خلال نافذة زمنية |
-| `retention_hours` | مدة بقاء الملفات المرفوعة قبل الحذف التلقائي |
-| `tool_paths` | مسارات مخصّصة للأدوات (اتركها فارغة للاكتشاف التلقائي) |
+| `max_upload_bytes` | Maximum image size |
+| `access_password` | Optional password protecting the page (empty = disabled) |
+| `captcha_question` | Simple arithmetic check against bots |
+| `command_timeout` | Tool timeout in seconds |
+| `rate_limit` | Analyses allowed per session within a time window |
+| `retention_hours` | How long uploaded files last before auto-delete |
+| `tool_paths` | Custom tool paths (empty = auto-detection) |
 
 ---
 
-## بنية المشروع
+## Project Structure
 
 ```
 .
-├── config/config.php        # الإعدادات
-├── public/                  # جذر الويب
-│   ├── index.php            # الصفحة
-│   ├── analyze.php          # endpoint التحليل
-│   ├── preview.php          # عرض الصورة المرفوعة
+├── config/config.php        # Settings
+├── public/                  # Web root
+│   ├── index.php            # The page
+│   ├── analyze.php          # Analysis endpoint
+│   ├── preview.php          # Serve the uploaded image
 │   └── assets/              # CSS/JS
-├── src/                     # منطق التطبيق (PSR-like، بدون Composer)
-│   ├── Analyzer.php         # المنسّق العام
-│   ├── Runner.php           # تشغيل الأوامر بأمان
-│   ├── Security.php         # التحقق وحماية الرفع
-│   ├── Uploader.php         # تخزين الملفات المؤقت
-│   ├── Structure.php        # تحليل بنية JPEG/PNG/GIF
-│   ├── Entropy.php          # الإنتروبيا وتحليل LSB
-│   ├── Highlights.php       # أهم الوسوم
-│   ├── Integrity.php        # كشف التعديل
-│   └── Tools/               # مغلّفات الأدوات
-├── storage/                 # ملفات مؤقتة (مستثناة من Git)
-├── deploy/nginx.conf        # إعداد Nginx مرجعي
-└── install.sh               # سكربت التثبيت
+├── src/                     # App logic (PSR-like, no Composer)
+│   ├── Analyzer.php         # Overall orchestrator
+│   ├── Runner.php           # Runs commands safely
+│   ├── Security.php         # Validation and upload protection
+│   ├── Uploader.php         # Temporary file storage
+│   ├── Structure.php        # JPEG/PNG/GIF structure analysis
+│   ├── Entropy.php          # Entropy and LSB analysis
+│   ├── Highlights.php       # Key tags
+│   ├── Integrity.php        # Tamper detection
+│   └── Tools/               # Tool wrappers
+├── storage/                 # Temporary files (git-ignored)
+├── deploy/nginx.conf        # Reference Nginx config
+└── install.sh               # Installer script
 ```
 
 ---
 
-## ملاحظات أمنية
+## Security Notes
 
-- لا تُنفَّذ الملفات المرفوعة إطلاقاً، وتُخزَّن باسم عشوائي خارج جذر الويب.
-- كل أوامر النظام تُشغَّل كمصفوفة معاملات (`proc_open` بدون shell) لتفادي حقن الأوامر.
-- تحقق مزدوج من الملف: الامتداد + `finfo` + التحقق من صحة الصورة.
-- رؤوس أمان (CSP, X-Frame-Options, nosniff) وحماية CSRF ومعدّل طلبات.
-- الملفات تُحذف تلقائياً حسب `retention_hours`.
-- **موصى به للإنتاج:** ضع الصفحة خلف HTTPS وشغّل `access_password`.
+- Uploaded files are never executed and are stored under a random name outside the web root.
+- All system commands run as an argument array (`proc_open` without shell) to prevent command injection.
+- Double file validation: extension + `finfo` + image sanity check.
+- Security headers (CSP, X-Frame-Options, nosniff), CSRF protection and rate limiting.
+- Files are deleted automatically according to `retention_hours`.
+- **Recommended for production:** serve over HTTPS and enable `access_password`.
 
 ---
 
-## استكشاف الأخطاء
+## Troubleshooting
 
-- **الفشل في رفع صور كبيرة:** تأكد من `upload_max_filesize` و`post_max_size` في PHP
-  و`client_max_body_size` في Nginx.
-- **binwalk: Entropy Exception (numba):** وحدة إنتروبيا binwalk معطّلة في بعض الأنظمة؛
-  التطبيق يحسب الإنتروبيا داخلياً ولن يتأثر.
-- **zsteg غير مكتشف:** تأكد من `gem install zsteg` وأن أمر `zsteg` ضمن `PATH`،
-  أو حدّد مساره في `tool_paths`.
-- **لا تظهر بيانات EXIF:** الصورة قد تكون مُسحت بياناتها (وهذا بحد ذاته مؤشر مهم).
-```
+- **Large uploads fail:** check `upload_max_filesize` and `post_max_size` in PHP,
+  and `client_max_body_size` in Nginx.
+- **binwalk: Entropy Exception (numba):** binwalk's entropy module is broken on some systems;
+  the app computes entropy internally and is unaffected.
+- **zsteg not detected:** make sure `gem install zsteg` was run and `zsteg` is on `PATH`,
+  or set its path in `tool_paths`.
+- **No EXIF shown:** the image may have had its metadata stripped (which is itself a meaningful signal).

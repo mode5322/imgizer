@@ -13,7 +13,7 @@ spl_autoload_register(function (string $class): void {
 });
 
 /**
- * بديل عن دوال mbstring في حال عدم تثبيت الإضافة (مثل php-mbstring).
+ * Fallback for mbstring functions when the extension is not installed.
  */
 if (!function_exists('mb_substr')) {
     function mb_substr(string $string, int $start, ?int $length = null, ?string $encoding = null): string

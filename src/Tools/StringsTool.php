@@ -93,7 +93,7 @@ final class StringsTool extends BaseTool
 
         return [
             'status' => 'ok',
-            'note' => count($items) . ' نص | ' . count($urls) . ' رابط | ' . count($emails) . ' بريد',
+            'note' => count($items) . ' strings | ' . count($urls) . ' links | ' . count($emails) . ' emails',
             'data' => [
                 'total' => count($items),
                 'urls' => array_slice($urls, 0, 100),

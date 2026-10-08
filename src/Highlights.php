@@ -64,33 +64,33 @@ final class Highlights
     {
         $camera = [];
         $map = [
-            'الشركة المصنّعة' => ['Make'],
-            'الموديل' => ['Model'],
-            'العدسة' => ['LensModel', 'LensID', 'Lens'],
-            'البعد البؤري' => ['FocalLength'],
-            'البعد البؤري (35مم)' => ['FocalLength35efl'],
-            'زمن التعريض' => ['ExposureTime'],
-            'سرعة الغالق' => ['ShutterSpeed'],
-            'فتحة العدسة' => ['FNumber', 'Aperture'],
-            'حساسية ISO' => ['ISO'],
-            'برنامج التعريض' => ['ExposureProgram'],
-            'تعويض التعريض' => ['ExposureCompensation'],
-            'الفلاش' => ['Flash'],
-            'طريقة القياس' => ['MeteringMode'],
-            'توازن اللون' => ['WhiteBalance'],
-            'تاريخ الالتقاط' => ['DateTimeOriginal'],
-            'تاريخ الإنشاء' => ['CreateDate'],
-            'تاريخ التعديل' => ['ModifyDate'],
-            'البرنامج المستخدم' => ['Software'],
-            'الفنان / المالك' => ['Artist', 'OwnerName'],
-            'حقوق النشر' => ['Copyright'],
-            'الاتجاه' => ['Orientation'],
-            'مساحة الألوان' => ['ColorSpace'],
-            'الأبعاد' => ['ImageSize'],
-            'الميجابكسل' => ['Megapixels'],
-            'الرقم التسلسلي للكاميرا' => ['SerialNumber', 'BodySerialNumber'],
-            'الرقم التسلسلي للعدسة' => ['LensSerialNumber'],
-            'اسم المضيف' => ['HostComputer'],
+            'Manufacturer' => ['Make'],
+            'Model' => ['Model'],
+            'Lens' => ['LensModel', 'LensID', 'Lens'],
+            'Focal length' => ['FocalLength'],
+            'Focal length (35mm)' => ['FocalLength35efl'],
+            'Exposure time' => ['ExposureTime'],
+            'Shutter speed' => ['ShutterSpeed'],
+            'Aperture' => ['FNumber', 'Aperture'],
+            'ISO sensitivity' => ['ISO'],
+            'Exposure program' => ['ExposureProgram'],
+            'Exposure compensation' => ['ExposureCompensation'],
+            'Flash' => ['Flash'],
+            'Metering mode' => ['MeteringMode'],
+            'White balance' => ['WhiteBalance'],
+            'Date taken' => ['DateTimeOriginal'],
+            'Date created' => ['CreateDate'],
+            'Date modified' => ['ModifyDate'],
+            'Software' => ['Software'],
+            'Artist / owner' => ['Artist', 'OwnerName'],
+            'Copyright' => ['Copyright'],
+            'Orientation' => ['Orientation'],
+            'Color space' => ['ColorSpace'],
+            'Dimensions' => ['ImageSize'],
+            'Megapixels' => ['Megapixels'],
+            'Camera serial number' => ['SerialNumber', 'BodySerialNumber'],
+            'Lens serial number' => ['LensSerialNumber'],
+            'Host computer' => ['HostComputer'],
         ];
         foreach ($map as $label => $tags) {
             $v = self::value($record, $tags);
@@ -126,17 +126,17 @@ final class Highlights
         }
 
         $privacyTags = [
-            'الموقع الجغرافي (GPS)' => ['GPSLatitude'],
-            'اسم الفنان / المالك' => ['Artist', 'OwnerName'],
-            'حقوق النشر' => ['Copyright'],
-            'الرقم التسلسلي للكاميرا' => ['SerialNumber', 'BodySerialNumber'],
-            'الرقم التسلسلي للعدسة' => ['LensSerialNumber'],
-            'تعليق المستخدم' => ['UserComment', 'Comment'],
-            'الوصف' => ['ImageDescription'],
-            'تعليق XP' => ['XPComment', 'XPTitle', 'XPSubject', 'XPAuthor'],
-            'المضيف / المستخدم' => ['HostComputer'],
-            'البريد الإلكتروني' => ['Email', 'ContactInfo'],
-            'برنامج التعديل' => ['Software'],
+            'Location (GPS)' => ['GPSLatitude'],
+            'Artist / owner name' => ['Artist', 'OwnerName'],
+            'Copyright' => ['Copyright'],
+            'Camera serial number' => ['SerialNumber', 'BodySerialNumber'],
+            'Lens serial number' => ['LensSerialNumber'],
+            'User comment' => ['UserComment', 'Comment'],
+            'Description' => ['ImageDescription'],
+            'XP comment' => ['XPComment', 'XPTitle', 'XPSubject', 'XPAuthor'],
+            'Host / user' => ['HostComputer'],
+            'Email' => ['Email', 'ContactInfo'],
+            'Editing software' => ['Software'],
         ];
         $privacy = [];
         foreach ($privacyTags as $label => $tags) {
@@ -154,15 +154,15 @@ final class Highlights
         if ($software) {
             foreach ($editors as $editor) {
                 if (stripos($software, $editor) !== false) {
-                    $editing[] = ['label' => 'برنامج تعديل', 'value' => $software];
+                    $editing[] = ['label' => 'Editing software', 'value' => $software];
                     break;
                 }
             }
         }
         $editingTags = [
-            'سجل التعديل XMP (History)' => ['HistoryWhen', 'HistorySoftwareAgent', 'HistoryAction'],
-            'معرّف المستند' => ['InstanceID', 'DocumentID', 'OriginalDocumentID'],
-            'XMP موسّع' => ['HasExtendedXMP'],
+            'XMP edit history' => ['HistoryWhen', 'HistorySoftwareAgent', 'HistoryAction'],
+            'Document ID' => ['InstanceID', 'DocumentID', 'OriginalDocumentID'],
+            'Extended XMP' => ['HasExtendedXMP'],
         ];
         foreach ($editingTags as $label => $tags) {
             $v = self::value($record, $tags);
