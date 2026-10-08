@@ -1,0 +1,17 @@
+# Runtime data
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/tmp/*
+!/storage/tmp/.gitkeep
+
+# Local overrides
+/config/config.local.php
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
