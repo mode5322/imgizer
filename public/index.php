@@ -99,7 +99,7 @@ $appConfig = [
 </main>
 
 <footer class="site-footer">
-    <span>Deep image forensics &amp; metadata analysis</span>
+    <span>Deep image forensics &amp; metadata analysis</span> · <a href="stego.php">Image Steganography</a>
 </footer>
 
 <script type="application/json" id="app-config"><?= json_encode($appConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
